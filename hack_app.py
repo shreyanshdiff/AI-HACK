@@ -3,8 +3,10 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
 import pickle
-from transformers import pipeline
+from ydata_profiling import ProfileReport
 
+
+df = pd.read_csv("WELFake_Dataset.csv" , nrows=100)
 # Load the TF-IDF vectorizer and the SVC model for fake tweet classification
 with open('tfidf_vectorizer.pkl', 'rb') as file:
     tfidf_vectorizer = pickle.load(file)
@@ -22,7 +24,7 @@ with open('model.pkl', 'rb') as file:
 # summarizer = pipeline("summarization")
 
 st.title('Fake News Classifier')
-abouts = st.sidebar.radio('Select Your Option', ('Text Classifier', 'Text Analysis' , 'Fake Tweet Classifier', 'Team'))
+abouts = st.sidebar.radio('Select Your Option', ('News Classifier', 'Text Analysis' , 'Fake Tweet Classifier', 'Team'))
 
 def classify_news():
     st.subheader("News Classifcation")
@@ -39,6 +41,9 @@ def classify_news():
                 st.success('Prediction: Fake News')
             else:
                 st.success('Prediction: True News')
+                
+    if st.button('Generate Profiling Report'):
+        profiling_report()
                 # summary = summarizer(text_input, max_length=150, min_length=30, do_sample=False)
                 # st.write('Summary of True News:')
                 # st.write(summary[0]['summary_text'])
@@ -57,7 +62,17 @@ def classify_tweet():
 def predict_fake_tweet(tweet):
     tweet_vectorized = tfidf_vectorizer.transform([tweet])
     prediction = svm_classifier.predict(tweet_vectorized)
-    return "Fake" if prediction == 1 else "Real"
+    return "Real" if prediction == 1 else "Fake"
+
+def profiling_report():
+    profile = ProfileReport(df, title="News Profiling Report", explorative=True)
+    profile.to_file("profiling_report.html")  # Save the profiling report to an HTML file
+
+    # Display the HTML content using st.components.v1.html
+    with open("profiling_report.html", "r", encoding="utf-8") as file:
+        profile_content = file.read()
+        st.components.v1.html(profile_content, height=600, scrolling=True)
+ 
 
 def team():
     st.subheader("Team")
@@ -68,7 +83,7 @@ def team():
     st.write("PRASHANSA PAL  - 21BIT0231")
     st.write("SHREYANSH SINGH  - 21BIT0604")
 
-if abouts == "Text Classifier":
+if abouts == "News Classifier":
     classify_news()
 
 if abouts == "Fake Tweet Classifier":
